@@ -31,7 +31,9 @@ def getFaceBox(net, frame, conf_threshold=0.7):
 app = Flask(__name__)
 CORS(app)
 
-
+@app.route('/success')
+def success():
+   return 'welcome'
 @app.route('/api', methods=['POST', 'GET'])
 def api():
 	data = request.get_json()
@@ -84,15 +86,6 @@ def api():
 	path = "./stranger/face.jpeg"
 	os.remove(path)
 	return res
-
-
-	
-
-
-
-
-
-
 
 if __name__ == '__main__':
 	app.run()
