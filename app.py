@@ -8,6 +8,7 @@ import os
 import shutil
 import time
 import cv2 as cv
+import numpy as np
 def getFaceBox(net, frame, conf_threshold=0.7):
     frameOpencvDnn = frame.copy()
     frameHeight = frameOpencvDnn.shape[0]
@@ -31,7 +32,7 @@ def getFaceBox(net, frame, conf_threshold=0.7):
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/success')
+@app.route('/')
 def success():
    return 'welcome'
 @app.route('/api', methods=['POST', 'GET'])
@@ -41,8 +42,9 @@ def api():
 	b = bytes(result, 'utf-8')
 	image = b[b.find(b'/9'):]
 	im = Image.open(io.BytesIO(base64.b64decode(image)))
-	directory = './stranger'
-	im.save(directory + '/face.jpeg')
+	cap1 = cv.cvtColor(np.array(im),cv.COLOR_RGB2BGR)
+	#directory = './stranger'
+	#im.save(directory + '/face.jpeg')
 	faceProto = "opencv_face_detector.pbtxt"
 	faceModel = "opencv_face_detector_uint8.pb"
 
@@ -58,12 +60,12 @@ def api():
 	faceNet = cv.dnn.readNet(faceModel, faceProto)
 
 	# Open a video file or an image file or a camera stream
-	cap = cv.imread('./stranger/face.jpeg')
+	#cap = cv.imread('./stranger/face.jpeg')
 	padding = 20
 
 	# Read frame
 	t = time.time()
-	frameFace, bboxes = getFaceBox(faceNet, cap)
+	frameFace, bboxes = getFaceBox(faceNet, cap1)
 	if not bboxes:
 		print("No face Detected, Checking next frame")
 	res = 'None'
@@ -71,7 +73,7 @@ def api():
 		return res
 	res = 'None'
 	for bbox in bboxes:
-		face = cap[max(0, bbox[1] - padding):min(bbox[3] + padding, cap.shape[0] - 1),max(0, bbox[0] - padding):min(bbox[2] + padding, cap.shape[1] - 1)]
+		face = cap1[max(0, bbox[1] - padding):min(bbox[3] + padding, cap1.shape[0] - 1),max(0, bbox[0] - padding):min(bbox[2] + padding, cap1.shape[1] - 1)]
 		blob = cv.dnn.blobFromImage(face, 1.0, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
 		genderNet.setInput(blob)
 		genderPreds = genderNet.forward()
@@ -83,8 +85,8 @@ def api():
 		#cv.imshow("Age Gender Demo", frameFace)
 		#cv.waitKey(0)
 	# cv.imwrite("age-gender-out-{}".format(args.input),frameFace)
-	path = "./stranger/face.jpeg"
-	os.remove(path)
+	#path = "./stranger/face.jpeg"
+	#os.remove(path)
 	return res
 
 if __name__ == '__main__':
